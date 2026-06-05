@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, type FormEvent } from "react";
+import toast from "react-hot-toast";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "@studio-freight/lenis";
@@ -223,9 +224,8 @@ const Homepage = () => {
         });
 
         const result = await response.json();
-        console.log("Success:", result);
+        toast.success("Message sent successfully!");
 
-        // Optional: Clear the form after a successful submission
         form.reset();
 
       } catch (error) {
