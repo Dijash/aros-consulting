@@ -1,5 +1,6 @@
 import User from "../models/users.js";
 
+//Admin Side
 export const getAllUsers = async (req, res) => {
     try {
         const allUsers = await User.find();
@@ -9,6 +10,7 @@ export const getAllUsers = async (req, res) => {
     }
 };
 
+//Client Side
 export const createUser = async (req, res) => {
     try {
         const newUser = new User(req.body);
@@ -19,6 +21,7 @@ export const createUser = async (req, res) => {
     }
 };
 
+//Admin Side
 export const getUserById = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
@@ -31,6 +34,7 @@ export const getUserById = async (req, res) => {
     }
 };
 
+//Client Side
 export const updateUser = async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(
@@ -47,6 +51,7 @@ export const updateUser = async (req, res) => {
     }
 };
 
+//Admin side    
 export const deleteUser = async (req, res) => {
     try {
         const deletedUser = await User.findByIdAndDelete(req.params.id);
