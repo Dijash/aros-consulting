@@ -6,6 +6,7 @@ import Footer from './Components/Footer';
 import LoginModal from './Components/LoginModal';
 import Homepage from './Pages/Homepage';
 import Servicepage from './Pages/Servicepage';
+import AdminLayout from './Pages/Admin/layout';
 
 const AppContent = () => {
   const [loginOpen, setLoginOpen] = useState(false);
@@ -15,7 +16,7 @@ const AppContent = () => {
   const handleLogin = (loggedInUser: { name: string; email: string; role: string }) => {
     setUser(loggedInUser);
     if (loggedInUser.role === 'admin') {
-      navigate('/');
+      navigate('/admin');
     }
   };
 
@@ -29,6 +30,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/servicepage" element={<Servicepage />} />
+        <Route path="/admin/*" element={<AdminLayout />} />
       </Routes>
       <Footer />
       <LoginModal
