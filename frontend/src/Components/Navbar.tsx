@@ -1,7 +1,13 @@
 import { memo, useEffect, useState } from 'react';
 import squareLogo from '../assets/images/Square Org.jpg';
 
-const Navbar = () => {
+interface NavbarProps {
+  user?: { name: string; email: string; role: string } | null;
+  onLoginClick?: () => void;
+  onLogout?: () => void;
+}
+
+const Navbar = ({ user, onLoginClick, onLogout }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -47,9 +53,20 @@ const Navbar = () => {
           ))}
         </ul>
 
-        <a href="#contact" className="nav-btn" onClick={e => { e.preventDefault(); scrollTo('contact'); }}>
-          Get Started
-        </a>
+        <div className="nav-actions">
+          {user ? (
+            <a href="#logout" className="nav-btn" onClick={e => { e.preventDefault(); onLogout?.(); }}>
+              Logout
+            </a>
+          ) : (
+            <a href="#login" className="nav-btn" onClick={e => { e.preventDefault(); onLoginClick?.(); }}>
+              Login
+            </a>
+          )}
+          <a href="#contact" className="nav-btn" onClick={e => { e.preventDefault(); scrollTo('contact'); }}>
+            Get Started
+          </a>
+        </div>
 
         <button
           className={`mobile-toggle${menuOpen ? ' active' : ''}`}
@@ -69,6 +86,17 @@ const Navbar = () => {
               </a>
             </li>
           ))}
+          <li>
+            {user ? (
+              <a href="#logout" className="mob-link" onClick={e => { e.preventDefault(); onLogout?.(); }}>
+                Logout
+              </a>
+            ) : (
+              <a href="#login" className="mob-link" onClick={e => { e.preventDefault(); onLoginClick?.(); }}>
+                Login
+              </a>
+            )}
+          </li>
         </ul>
       </div>
     </>

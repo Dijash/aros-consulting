@@ -4,6 +4,7 @@ import {
 	deleteUser,
 	getAllUsers,
 	getUserById,
+	loginUser,
 	updateUser,
 } from "../controller/userController.js";
 import {
@@ -21,5 +22,7 @@ router.delete("/users/:id", deleteUser);
 
 router.post("/contact", createContact);
 router.get("/contact", getAllContacts);
+
+router.post("/login", loginUser);
 
 export default router;

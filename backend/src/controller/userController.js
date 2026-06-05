@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import User from "../models/users.js";
 
 //Admin Side
@@ -13,9 +14,37 @@ export const getAllUsers = async (req, res) => {
 //Client Side
 export const createUser = async (req, res) => {
     try {
-        const newUser = new User(req.body);
+        const { password, ...rest } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({ ...rest, password: hashedPassword });
         const savedUser = await newUser.save();
-        res.status(201).json(savedUser);
+        const { password: _, ...userWithoutPassword } = savedUser.toObject();
+        res.status(201).json(userWithoutPassword);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        const { password: _, ...userWithoutPassword } = user.toObject();
+        res.status(200).json(userWithoutPassword);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -1566,6 +1566,113 @@ footer {
 .stagger-2 { transition-delay: .2s; }
 .stagger-3 { transition-delay: .3s; }
 
+/* ── LOGIN MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .7);
+  backdrop-filter: blur(6px);
+}
+
+.modal-content {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--steel);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 0;
+  transition: color .3s;
+}
+
+.modal-close:hover { color: var(--text); }
+
+.modal-title {
+  font-family: var(--f-display);
+  font-size: 1.6rem;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.modal-subtitle {
+  font-size: .9rem;
+  color: var(--steel);
+  margin-bottom: 28px;
+}
+
+.m-group {
+  margin-bottom: 18px;
+}
+
+.m-group label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.m-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: var(--f-body);
+  font-size: .95rem;
+  outline: none;
+  transition: border-color .3s;
+}
+
+.m-group input:focus {
+  border-color: var(--brand);
+}
+
+.m-btn {
+  width: 100%;
+  padding: 13px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--brand), #7a1523);
+  color: #fff;
+  font-family: var(--f-head);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .3s;
+}
+
+.m-btn:hover { opacity: .88; }
+.m-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── NAV ACTIONS ── */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* ── MOBILE TOGGLE ── */
 .mobile-toggle { display: none; }
 .mobile-menu { display: none; }
