@@ -77,28 +77,35 @@ const Navbar = ({ user, onLoginClick, onLogout }: NavbarProps) => {
         </button>
       </nav>
 
-      <div className={`mobile-menu${menuOpen ? ' active' : ''}`}>
-        <ul className="mobile-nav-links">
-          {['about','services','mentors','testimonials','blog','contact'].map(id => (
-            <li key={id}>
-              <a href={`#${id}`} className="mob-link" onClick={e => { e.preventDefault(); scrollTo(id); }}>
-                {id === 'blog' ? 'Resources' : id.charAt(0).toUpperCase() + id.slice(1)}
-              </a>
+      {menuOpen && (
+        <div className="mobile-menu" onClick={closeMenu}>
+          <button className="mobile-close" onClick={closeMenu} aria-label="Close menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+          <ul className="mobile-nav-links" onClick={e => e.stopPropagation()}>
+            {['about','services','mentors','testimonials','blog','contact'].map(id => (
+              <li key={id}>
+                <a href={`#${id}`} className="mob-link" onClick={e => { e.preventDefault(); scrollTo(id); }}>
+                  {id === 'blog' ? 'Resources' : id.charAt(0).toUpperCase() + id.slice(1)}
+                </a>
+              </li>
+            ))}
+            <li>
+              {user ? (
+                <a href="#logout" className="mob-link" onClick={e => { e.preventDefault(); onLogout?.(); }}>
+                  Logout
+                </a>
+              ) : (
+                <a href="#login" className="mob-link" onClick={e => { e.preventDefault(); onLoginClick?.(); }}>
+                  Login
+                </a>
+              )}
             </li>
-          ))}
-          <li>
-            {user ? (
-              <a href="#logout" className="mob-link" onClick={e => { e.preventDefault(); onLogout?.(); }}>
-                Logout
-              </a>
-            ) : (
-              <a href="#login" className="mob-link" onClick={e => { e.preventDefault(); onLoginClick?.(); }}>
-                Login
-              </a>
-            )}
-          </li>
-        </ul>
-      </div>
+          </ul>
+        </div>
+      )}
     </>
   );
 };

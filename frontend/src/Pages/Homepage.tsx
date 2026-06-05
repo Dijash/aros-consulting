@@ -40,6 +40,35 @@ const ArrowIcon = () => (
 
 const Homepage = () => {
   const hasInit = useRef(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    let fading = false;
+
+    const onTimeUpdate = () => {
+      if (!video.duration) return;
+      const timeLeft = video.duration - video.currentTime;
+      if (timeLeft < 0.45 && !fading) {
+        fading = true;
+        video.style.opacity = '0.06';
+      } else if (video.currentTime > 0.5 && fading) {
+        fading = false;
+        video.style.opacity = '1';
+      }
+    };
+
+    const onReady = () => video.addEventListener('timeupdate', onTimeUpdate);
+    video.addEventListener('loadedmetadata', onReady);
+    if (video.readyState >= 1) onReady();
+
+    return () => {
+      video.removeEventListener('timeupdate', onTimeUpdate);
+      video.removeEventListener('loadedmetadata', onReady);
+    };
+  }, []);
 
   useEffect(() => {
     if (hasInit.current) return;
@@ -223,7 +252,7 @@ const Homepage = () => {
           body: JSON.stringify(data),
         });
 
-        const result = await response.json();
+        await response.json();
         toast.success("Message sent successfully!");
 
         form.reset();
@@ -249,12 +278,14 @@ const Homepage = () => {
           <div className="hero-bg" />
           <div className="hero-grid-lines" />
           <video
+            ref={videoRef}
             id="hero-video"
             src={earthVideo}
             autoPlay
             loop
             muted
             playsInline
+            style={{ transition: 'opacity 0.4s ease' }}
           />
 
           <div className="hero-counter">
@@ -818,7 +849,10 @@ const Homepage = () => {
                   val: "arosoctaconsulting@gmail.com",
                 },
               ].map((d) => (
-                <div className="c-detail" key={d.label}>
+                <div
+                  className="c-detail"
+                  key={d.label}
+                >
                   <div className="c-ico">{d.icon}</div>
                   <div className="c-text">
                     <div className="label">{d.label}</div>
