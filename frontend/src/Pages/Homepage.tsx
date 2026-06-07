@@ -17,7 +17,7 @@ import ujjwalImg from "../assets/images/Ujjwal.jpg";
 import anilImg from "../assets/images/Anil (1).png";
 import earthVideo from "../assets/video/Earth Animation.mp4";
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API = import.meta.env.VITE_API_URL || 'https://aros-consulting-fofj.vercel.app';
 
 gsap.registerPlugin(ScrollTrigger);
 

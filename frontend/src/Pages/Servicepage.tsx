@@ -7,7 +7,7 @@ import FadeUp from '../Components/FadeUp';
 import quickbooksImg from "../assets/images/Quickbooks.png";
 import xeroImg from "../assets/images/Xero_software_logo.svg.png";
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API = import.meta.env.VITE_API_URL || 'https://aros-consulting-fofj.vercel.app';
 
 const serviceIcons: Record<string, React.ReactNode> = {
   "quickbooks-training": <img src={quickbooksImg} alt="QuickBooks" />,

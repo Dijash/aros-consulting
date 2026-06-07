@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { val } from '../../validation';
 import './Admin.css'
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API = import.meta.env.VITE_API_URL || 'https://aros-consulting-fofj.vercel.app';
 
 type Submission = {
   _id: string; firstName: string; lastName: string;

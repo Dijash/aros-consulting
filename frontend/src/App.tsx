@@ -11,7 +11,7 @@ import AdminLayout from './Pages/Admin/layout';
 import UserLayout from './Pages/User/layout';
 import useSessionTimeout from './useSessionTimeout';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API = import.meta.env.VITE_API_URL || 'https://aros-consulting-fofj.vercel.app';
 
 const ProtectedRoute = ({ user, checkingAuth, children }: { user: { name: string; email: string; role: string } | null; checkingAuth: boolean; children: React.ReactNode }) => {
   if (checkingAuth) {

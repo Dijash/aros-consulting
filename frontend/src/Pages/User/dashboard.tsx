@@ -6,7 +6,7 @@ import { val } from '../../validation';
 import FadeUp from '../../Components/FadeUp';
 import './User.css';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API = import.meta.env.VITE_API_URL || 'https://aros-consulting-fofj.vercel.app';
 
 type Enrollment = {
   _id: string;
