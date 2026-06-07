@@ -41,7 +41,7 @@ if (!process.env.VERCEL) {
   }
 }
 
-await connectDB();
+connectDB().catch(err => console.error("MongoDB connection error:", err.message));
 
 if (!process.env.VERCEL) {
   app.listen(port, () => {
