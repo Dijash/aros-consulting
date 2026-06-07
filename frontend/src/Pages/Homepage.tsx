@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Lenis from "@studio-freight/lenis";
+import Lenis from "lenis";
 
 import quickbooksImg from "../assets/images/Quickbooks.png";
 import xeroImg from "../assets/images/Xero_software_logo.svg.png";
