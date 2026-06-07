@@ -17,22 +17,23 @@ const __dirname = dirname(__filename);
 app.use(cors());
 
 app.use(express.json());
-app.use(router);
-
-app.get("/health", (req, res) => {
+app.use("/api", router);
+app.get("/api/health", (req, res) => {
   res.status(200).json({ message: "API is running" });
 });
 
-const frontendDist = join(__dirname, '../../frontend/dist');
-if (existsSync(frontendDist)) {
-  app.use(express.static(frontendDist));
-  app.use((req, res, next) => {
-    if (req.method === 'GET') {
-      res.sendFile(join(frontendDist, 'index.html'));
-    } else {
-      next();
-    }
-  });
+if (!process.env.VERCEL) {
+  const frontendDist = join(__dirname, '../../frontend/dist');
+  if (existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+    app.use((req, res, next) => {
+      if (req.method === 'GET') {
+        res.sendFile(join(frontendDist, 'index.html'));
+      } else {
+        next();
+      }
+    });
+  }
 }
 
 await connectDB();
