@@ -1,15 +1,19 @@
 import { memo, useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import squareLogo from '../assets/images/Square Org.jpg';
 
 interface NavbarProps {
   user?: { name: string; email: string; role: string } | null;
   onLoginClick?: () => void;
+  onRegisterClick?: () => void;
   onLogout?: () => void;
 }
 
-const Navbar = ({ user, onLoginClick, onLogout }: NavbarProps) => {
+const Navbar = ({ user, onLoginClick, onRegisterClick, onLogout }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -30,6 +34,10 @@ const Navbar = ({ user, onLoginClick, onLogout }: NavbarProps) => {
 
   const scrollTo = (id: string) => {
     closeMenu();
+    if (location.pathname !== '/') {
+      navigate(`/#${id}`);
+      return;
+    }
     setTimeout(() => {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
@@ -55,15 +63,20 @@ const Navbar = ({ user, onLoginClick, onLogout }: NavbarProps) => {
 
         <div className="nav-actions">
           {user ? (
-            <a href="#logout" className="nav-btn" onClick={e => { e.preventDefault(); onLogout?.(); }}>
-              Logout
-            </a>
+            <>
+              <a href={user?.role === 'admin' ? '/admin' : '/user'} className="nav-btn">
+                Dashboard
+              </a>
+              <a href="#logout" className="nav-btn nav-btn-ghost" onClick={e => { e.preventDefault(); onLogout?.(); }}>
+                Logout
+              </a>
+            </>
           ) : (
             <a href="#login" className="nav-btn" onClick={e => { e.preventDefault(); onLoginClick?.(); }}>
               Login
             </a>
           )}
-          <a href="#contact" className="nav-btn" onClick={e => { e.preventDefault(); scrollTo('contact'); }}>
+          <a href="#register" className="nav-btn" onClick={e => { e.preventDefault(); onRegisterClick?.(); }}>
             Get Started
           </a>
         </div>
@@ -94,8 +107,8 @@ const Navbar = ({ user, onLoginClick, onLogout }: NavbarProps) => {
             ))}
             <li>
               {user ? (
-                <a href="#logout" className="mob-link" onClick={e => { e.preventDefault(); onLogout?.(); }}>
-                  Logout
+                <a href={user?.role === 'admin' ? '/admin' : '/user'} className="mob-link" onClick={closeMenu}>
+                  Dashboard
                 </a>
               ) : (
                 <a href="#login" className="mob-link" onClick={e => { e.preventDefault(); onLoginClick?.(); }}>
@@ -103,6 +116,13 @@ const Navbar = ({ user, onLoginClick, onLogout }: NavbarProps) => {
                 </a>
               )}
             </li>
+            {user && (
+              <li>
+                <a href="#logout" className="mob-link" onClick={e => { e.preventDefault(); onLogout?.(); }}>
+                  Logout
+                </a>
+              </li>
+            )}
           </ul>
         </div>
       )}

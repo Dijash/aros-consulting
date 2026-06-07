@@ -1,4 +1,5 @@
-import { memo, useEffect, useRef, type FormEvent } from "react";
+import { memo, useEffect, useRef, useState, type FormEvent } from "react";
+import { Link, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -15,6 +16,8 @@ import dineshImg from "../assets/images/Dinesh.jpg";
 import ujjwalImg from "../assets/images/Ujjwal.jpg";
 import anilImg from "../assets/images/Anil (1).png";
 import earthVideo from "../assets/video/Earth Animation.mp4";
+
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -39,8 +42,30 @@ const ArrowIcon = () => (
 );
 
 const Homepage = () => {
-  const hasInit = useRef(false);
+    const location = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [testimonials, setTestimonials] = useState<{ name: string; role: string; quote: string }[]>([]);
+  const [blogPosts, setBlogPosts] = useState<{ title: string; category: string; readTime: string; date: string; author: string }[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [tesRes, blogRes] = await Promise.all([
+          fetch(`${API}/testimonials/public`),
+          fetch(`${API}/posts/public`),
+        ]);
+        if (tesRes.ok) {
+          const data: { name: string; role: string; quote: string }[] = await tesRes.json();
+          setTestimonials(data);
+        }
+        if (blogRes.ok) {
+          const data: { title: string; category: string; readTime: string; date: string; author: string }[] = await blogRes.json();
+          setBlogPosts(data);
+        }
+      } catch { /* ignore */ }
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -71,14 +96,19 @@ const Homepage = () => {
   }, []);
 
   useEffect(() => {
-    if (hasInit.current) return;
-    hasInit.current = true;
-
     // Lenis smooth scroll
     const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.add((time) => lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
+
+    // Scroll to hash after Lenis is ready (navigated from another page)
+    if (location.hash) {
+      setTimeout(() => {
+        const el = document.getElementById(location.hash.replace('#', ''));
+        if (el) lenis.scrollTo(el, { offset: -80, duration: 1.2 });
+      }, 300);
+    }
 
     // Counter animation
     const countUp = (el: HTMLElement | null, target: number, dur = 2000) => {
@@ -155,18 +185,20 @@ const Homepage = () => {
     lenis.on("scroll", ({ scroll }: { scroll: number }) => onScroll(scroll));
 
     // Cursor
-    const cursor = document.getElementById("cursor");
-    const ring = document.getElementById("cursor-ring");
+    const cursor = document.getElementById("cursor") as HTMLElement | null;
+    const ring = document.getElementById("cursor-ring") as HTMLElement | null;
     let mx = 0,
       my = 0,
       cx = 0,
       cy = 0,
       rx = 0,
       ry = 0;
-    document.addEventListener("mousemove", (e) => {
+    let cursorFrame: number;
+    const onMouseMove = (e: MouseEvent) => {
       mx = e.clientX;
       my = e.clientY;
-    });
+    };
+    document.addEventListener("mousemove", onMouseMove);
     const animateCursor = () => {
       cx += (mx - cx) * 0.9;
       cy += (my - cy) * 0.9;
@@ -180,40 +212,35 @@ const Homepage = () => {
         ring.style.left = rx + "px";
         ring.style.top = ry + "px";
       }
-      requestAnimationFrame(animateCursor);
+      cursorFrame = requestAnimationFrame(animateCursor);
     };
     animateCursor();
 
-    document
-      .querySelectorAll<Element>(
-        "a,button,.svc-card,.blog-featured,.blog-card-sm",
-      )
-      .forEach((el) => {
-        el.addEventListener("mouseenter", () => {
-          if (cursor) {
-            cursor.style.width = "20px";
-            cursor.style.height = "20px";
-          }
-          if (ring) {
-            ring.style.width = "60px";
-            ring.style.height = "60px";
-            ring.style.borderColor = "rgba(204,17,17,.8)";
-          }
-        });
-        el.addEventListener("mouseleave", () => {
-          if (cursor) {
-            cursor.style.width = "10px";
-            cursor.style.height = "10px";
-          }
-          if (ring) {
-            ring.style.width = "38px";
-            ring.style.height = "38px";
-            ring.style.borderColor = "rgba(122,122,122,.55)";
-          }
-        });
-      });
+    const hoverEls = document.querySelectorAll<Element>(
+      "a,button,.svc-card,.blog-featured,.blog-card-sm",
+    );
+    const onEnter = () => {
+      if (cursor) { cursor.style.width = "20px"; cursor.style.height = "20px"; }
+      if (ring) { ring.style.width = "60px"; ring.style.height = "60px"; ring.style.borderColor = "rgba(204,17,17,.8)"; }
+    };
+    const onLeave = () => {
+      if (cursor) { cursor.style.width = "10px"; cursor.style.height = "10px"; }
+      if (ring) { ring.style.width = "38px"; ring.style.height = "38px"; ring.style.borderColor = "rgba(122,122,122,.55)"; }
+    };
+    hoverEls.forEach((el) => {
+      el.addEventListener("mouseenter", onEnter);
+      el.addEventListener("mouseleave", onLeave);
+    });
+
+    ScrollTrigger.refresh();
 
     return () => {
+      cancelAnimationFrame(cursorFrame);
+      document.removeEventListener("mousemove", onMouseMove);
+      hoverEls.forEach((el) => {
+        el.removeEventListener("mouseenter", onEnter);
+        el.removeEventListener("mouseleave", onLeave);
+      });
       lenis.destroy();
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
@@ -241,9 +268,7 @@ const Homepage = () => {
       const data = Object.fromEntries(formData.entries());
 
       try {
-        // 4. Send the POST request to your backend
-        // Make sure to replace 'your-endpoint' with your actual backend route (e.g., '/contact')
-        const response = await fetch("http://localhost:3000/contact", {
+        const response = await fetch(`${API}/contact`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -464,15 +489,17 @@ const Homepage = () => {
                 num: "01",
                 img: quickbooksImg,
                 title: "QuickBooks Training",
+                slug: "quickbooks-training",
                 desc: "Master QuickBooks Online and Desktop with practical, job-ready exercises tailored for Nepali accounting professionals.",
-                pill: "Beginner → Advanced",
+                tag: "Beginner → Advanced",
               },
               {
                 num: "02",
                 img: xeroImg,
                 title: "Xero Certification Prep",
+                slug: "xero-certification-prep",
                 desc: "Guided instruction, real case studies, and exam-focused practice to achieve your Xero Advisor Certification.",
-                pill: "Certification",
+                tag: "Certification",
               },
               {
                 num: "03",
@@ -483,8 +510,9 @@ const Homepage = () => {
                   </svg>
                 ),
                 title: "Global Opportunity Program",
+                slug: "global-opportunity-program",
                 desc: "CV building, interview prep, and direct introductions to international accounting firms recruiting from Nepal.",
-                pill: "Career Development",
+                tag: "Career Development",
               },
               {
                 num: "04",
@@ -495,8 +523,9 @@ const Homepage = () => {
                   </svg>
                 ),
                 title: "MYOB & SAGE Training",
+                slug: "myob-sage-training",
                 desc: "Popular in Australian, UK, and Middle Eastern markets — master these platforms and open more global doors.",
-                pill: "Software Mastery",
+                tag: "Software Mastery",
               },
               {
                 num: "05",
@@ -509,8 +538,9 @@ const Homepage = () => {
                   </svg>
                 ),
                 title: "1-on-1 Mentorship",
+                slug: "one-on-one-mentorship",
                 desc: "Personalized sessions with expert mentors to tackle your specific career challenges and accelerate your growth.",
-                pill: "Personalized",
+                tag: "Personalized",
               },
               {
                 num: "06",
@@ -520,8 +550,9 @@ const Homepage = () => {
                   </svg>
                 ),
                 title: "Excel for Accountants",
+                slug: "excel-for-accountants",
                 desc: "Advanced Excel, pivot tables, and financial modelling skills — the power tools every global accountant must have.",
-                pill: "Power Skills",
+                tag: "Power Skills",
               },
             ].map((s, i) => (
               <div
@@ -534,13 +565,13 @@ const Homepage = () => {
                 </div>
                 <h3>{s.title}</h3>
                 <p>{s.desc}</p>
-                <span className="svc-pill">{s.pill}</span>
-                <span className="svc-learn">Learn More</span>
-                <div className="svc-arrow">
+                  <span className="svc-tag">{s.tag}</span>
+                <Link to={`/servicepage/${s.slug}`} className="svc-learn">Learn More</Link>
+                <Link to={`/servicepage/${s.slug}`} className="svc-arrow">
                   <svg viewBox="0 0 24 24">
                     <path d="M7 17L17 7M17 7H7M17 7v10" />
                   </svg>
-                </div>
+                </Link>
               </div>
             ))}
           </div>
@@ -612,29 +643,13 @@ const Homepage = () => {
           <div className="s-label reveal">Testimonials</div>
           <h2 className="s-title reveal">What Our Graduates Say</h2>
           <div className="testimonials-grid">
-            {[
-              {
-                quote:
-                  '"The training was excellent. The trainer as well as the team were very supportive... I feel more confident in using cloud accounting software and I believe this knowledge will be useful for future accounting roles."',
-                name: "Bibek Prasad Kushwaha",
-              },
-              {
-                quote:
-                  '"Each and everyone of you were dedicated and there for us to clear our doubts whenever needed. It was incredible to learn about QuickBooks & Xero software under your guidance."',
-                name: "Pabitra Kumari Budhathoki",
-              },
-              {
-                quote:
-                  '"I must appreciate the supporting team from Aros Octa Consulting... the trainer is very calm and clarify every doubts come during the training. The practical, hands-on sessions were great."',
-                name: "Nisha Shrestha",
-              },
-            ].map((t, i) => (
+            {testimonials.length === 0 ? (
+              <p style={{ color: 'rgba(255,255,255,.4)', gridColumn: '1 / -1' }}>No testimonials yet.</p>
+            ) : testimonials.slice(0, 6).map((t, i) => (
               <div className={`svc-card reveal stagger-${i + 1}`} key={t.name}>
-                <p>{t.quote}</p>
+                <p>"{t.quote}"</p>
                 <h3>{t.name}</h3>
-                <span className="testimonial-role">
-                  QuickBooks &amp; Xero Graduate
-                </span>
+                {t.role && <span className="testimonial-role">{t.role}</span>}
               </div>
             ))}
           </div>
@@ -706,7 +721,7 @@ const Homepage = () => {
             ].map((m) => (
               <div className="mentor-row reveal" key={m.name}>
                 <div className="mentor-row-img">
-                  <span className="mentor-pill">Mentor</span>
+                  <span className="mentor-tag">Mentor</span>
                   <img
                     src={m.img}
                     alt={m.name}
@@ -747,58 +762,33 @@ const Homepage = () => {
             Your Journey
           </h2>
           <div className="blog-layout">
-            <div className="blog-featured reveal">
-              <a href="#" className="blog-feat-arrow">
-                <svg viewBox="0 0 24 24">
-                  <path d="M7 17L17 7M17 7H7M17 7v10" />
-                </svg>
-              </a>
-              <div className="blog-feat-cat">Featured · 8 min read</div>
-              <h2>
-                How Nepali Accountants Can Land Remote Jobs in Australia and the
-                UK in 2025
-              </h2>
-              <p>
-                A step-by-step guide to getting Xero certified, building your
-                remote-work profile, and applying to international firms from
-                Kathmandu.
-              </p>
-              <div className="blog-meta">April 15, 2025 · Aros Octa Team</div>
-            </div>
-            <div className="blog-side">
-              {[
-                {
-                  cat: "Software · 5 min",
-                  title: "QuickBooks vs Xero: Which Should You Learn First?",
-                  desc: "A practical comparison for Nepali accountants targeting global opportunities.",
-                  date: "March 28, 2025",
-                },
-                {
-                  cat: "Career · 6 min",
-                  title:
-                    "5 CV Mistakes Nepali Accountants Make When Applying Abroad",
-                  desc: "Avoid these common errors and immediately stand out to international recruiters.",
-                  date: "March 10, 2025",
-                },
-                {
-                  cat: "Leadership · 4 min",
-                  title:
-                    "Why Communication Skills Are the Hidden Key to Global Accounting Careers",
-                  desc: "Technical skills get you in the door — soft skills keep you in the room.",
-                  date: "February 22, 2025",
-                },
-              ].map((b, i) => (
-                <div
-                  className={`blog-card-sm reveal stagger-${i + 1}`}
-                  key={b.title}
-                >
-                  <div className="blog-cat">{b.cat}</div>
-                  <h3>{b.title}</h3>
-                  <p>{b.desc}</p>
-                  <div className="date">{b.date}</div>
+            {blogPosts.length === 0 ? (
+              <p style={{ color: 'rgba(255,255,255,.4)' }}>No posts yet.</p>
+            ) : (
+              <>
+                <div className="blog-featured reveal">
+                  <a href="#" className="blog-feat-arrow">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M7 17L17 7M17 7H7M17 7v10" />
+                    </svg>
+                  </a>
+                  <div className="blog-feat-cat">{blogPosts[0].category} · {blogPosts[0].readTime} read</div>
+                  <h2>{blogPosts[0].title}</h2>
+                  <p>{blogPosts[0].title}</p>
+                  <div className="blog-meta">{blogPosts[0].date} · {blogPosts[0].author}</div>
                 </div>
-              ))}
-            </div>
+                <div className="blog-side">
+                  {blogPosts.slice(1).map((b, i) => (
+                    <div className={`blog-card-sm reveal stagger-${i + 1}`} key={b.title}>
+                      <div className="blog-cat">{b.category} · {b.readTime}</div>
+                      <h3>{b.title}</h3>
+                      <p>{b.title}</p>
+                      <div className="date">{b.date}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </section>
 

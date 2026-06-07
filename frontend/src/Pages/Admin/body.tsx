@@ -1,57 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { val } from '../../validation';
 import './Admin.css'
 
-/* ─── Shared types ─── */
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 type Submission = {
-  id: number; name: string; email: string;
-  interest: string; message: string; date: string; status: 'new' | 'read' | 'replied';
+  _id: string; firstName: string; lastName: string;
+  email: string; interest: string; message: string;
+  createdAt: string; status?: string;
 };
 type Student = {
-  id: number; name: string; email: string; phone: string;
+  _id: string; name: string; email: string; phone: string;
   course: string; enrolled: string; status: 'active' | 'completed' | 'dropped';
 };
 type Testimonial = {
-  id: number; name: string; role: string; quote: string;
+  _id: string; name: string; role: string; quote: string;
   visible: boolean; date: string;
 };
 type BlogPost = {
-  id: number; title: string; category: string;
+  _id: string; title: string; category: string;
   readTime: string; date: string; published: boolean; author: string;
 };
+type AppUser = {
+  _id: string; name: string; email: string; role: string; createdAt: string;
+};
 
-/* ─── Seed data ─── */
-const initSubmissions: Submission[] = [
-  { id: 1, name: 'Rajesh Sharma', email: 'rajesh@gmail.com', interest: 'QuickBooks Training', message: 'I want to enroll in the next batch. Please let me know the schedule.', date: '2025-05-20', status: 'new' },
-  { id: 2, name: 'Priya Thapa', email: 'priya@yahoo.com', interest: 'Xero Certification Prep', message: 'I have 2 years of accounting experience and want to get Xero certified.', date: '2025-05-18', status: 'read' },
-  { id: 3, name: 'Arjun KC', email: 'arjun@outlook.com', interest: 'Global Opportunity Program', message: 'Looking for placement help in Australia. Currently CPA qualified.', date: '2025-05-15', status: 'replied' },
-  { id: 4, name: 'Sunita Rai', email: 'sunita@gmail.com', interest: 'Excel for Accountants', message: 'Want to improve my Excel skills for better job prospects.', date: '2025-05-12', status: 'new' },
-  { id: 5, name: 'Bishal Gurung', email: 'bishal@gmail.com', interest: '1-on-1 Mentorship', message: 'Need personalized guidance to transition into cloud accounting.', date: '2025-05-10', status: 'replied' },
-];
-
-const initStudents: Student[] = [
-  { id: 1, name: 'Bibek Prasad Kushwaha', email: 'bibek@gmail.com', phone: '+977 9801234567', course: 'QuickBooks Training', enrolled: '2025-04-01', status: 'completed' },
-  { id: 2, name: 'Pabitra Budhathoki', email: 'pabitra@gmail.com', phone: '+977 9807654321', course: 'Xero Certification Prep', enrolled: '2025-04-15', status: 'active' },
-  { id: 3, name: 'Nisha Shrestha', email: 'nisha@gmail.com', phone: '+977 9812345678', course: 'QuickBooks Training', enrolled: '2025-04-01', status: 'completed' },
-  { id: 4, name: 'Sanjay Limbu', email: 'sanjay@gmail.com', phone: '+977 9876543210', course: 'MYOB & SAGE Training', enrolled: '2025-05-01', status: 'active' },
-  { id: 5, name: 'Anjali Tamang', email: 'anjali@gmail.com', phone: '+977 9823456789', course: 'Excel for Accountants', enrolled: '2025-05-10', status: 'active' },
-  { id: 6, name: 'Dipesh Karki', email: 'dipesh@gmail.com', phone: '+977 9834567890', course: 'Global Opportunity Program', enrolled: '2025-03-20', status: 'dropped' },
-];
-
-const initTestimonials: Testimonial[] = [
-  { id: 1, name: 'Bibek Prasad Kushwaha', role: 'QuickBooks & Xero Graduate', quote: 'The training was excellent. The trainer as well as the team were very supportive... I feel more confident in using cloud accounting software.', visible: true, date: '2025-04-10' },
-  { id: 2, name: 'Pabitra Kumari Budhathoki', role: 'QuickBooks & Xero Graduate', quote: 'Each and everyone of you were dedicated and there for us to clear our doubts whenever needed. It was incredible to learn about QuickBooks & Xero.', visible: true, date: '2025-04-10' },
-  { id: 3, name: 'Nisha Shrestha', role: 'QuickBooks & Xero Graduate', quote: 'The trainer is very calm and clarify every doubts come during the training. The practical, hands-on sessions were great.', visible: true, date: '2025-04-10' },
-  { id: 4, name: 'Ramesh Adhikari', role: 'Xero Graduate', quote: 'This course completely changed my career trajectory. Highly recommended for anyone serious about global accounting.', visible: false, date: '2025-05-01' },
-];
-
-const initBlog: BlogPost[] = [
-  { id: 1, title: 'How Nepali Accountants Can Land Remote Jobs in Australia and the UK in 2025', category: 'Featured', readTime: '8 min', date: '2025-04-15', published: true, author: 'Aros Octa Team' },
-  { id: 2, title: 'QuickBooks vs Xero: Which Should You Learn First?', category: 'Software', readTime: '5 min', date: '2025-03-28', published: true, author: 'CA. Deepak Thapa' },
-  { id: 3, title: '5 CV Mistakes Nepali Accountants Make When Applying Abroad', category: 'Career', readTime: '6 min', date: '2025-03-10', published: true, author: 'Aros Octa Team' },
-  { id: 4, title: 'Why Communication Skills Are the Hidden Key to Global Accounting Careers', category: 'Leadership', readTime: '4 min', date: '2025-02-22', published: false, author: 'Ujjwal Chaudhary' },
-];
-
-/* ─── Helpers ─── */
 const Badge = ({ label }: { label: string }) => {
   const safe = String(label).toLowerCase().replace(/\s+/g, '-');
   return <span className={`admin-badge admin-badge-${safe}`}>{label}</span>;
@@ -74,7 +48,6 @@ const Stat = ({ label, value, accent }: { label: string; value: string | number;
   </div>
 );
 
-/* ─── OVERVIEW ─── */
 const Overview = ({ submissions, students, testimonials, blog }: {
   submissions: Submission[]; students: Student[];
   testimonials: Testimonial[]; blog: BlogPost[];
@@ -83,7 +56,7 @@ const Overview = ({ submissions, students, testimonials, blog }: {
     <PageHeader title="Overview" sub="Welcome back — here's what's happening." />
     <div className="admin-stats-grid">
       <Stat label="Total Submissions" value={submissions.length} accent />
-      <Stat label="New Unread" value={submissions.filter(s => s.status === 'new').length} />
+      <Stat label="New Unread" value={submissions.filter(s => s.status !== 'read' && s.status !== 'replied').length} />
       <Stat label="Total Students" value={students.length} />
       <Stat label="Active Students" value={students.filter(s => s.status === 'active').length} />
       <Stat label="Published Posts" value={blog.filter(b => b.published).length} />
@@ -91,26 +64,24 @@ const Overview = ({ submissions, students, testimonials, blog }: {
     </div>
 
     <div className="admin-two-col">
-      {/* Recent submissions */}
       <div className="admin-card">
         <h3 className="admin-card-title">Recent Submissions</h3>
         {submissions.slice(0, 4).map(s => (
-          <div key={s.id} className="admin-overview-row">
+          <div key={s._id} className="admin-overview-row">
             <div>
-              <div className="admin-overview-name">{s.name}</div>
+              <div className="admin-overview-name">{s.firstName} {s.lastName}</div>
               <div className="admin-overview-sub">{s.interest}</div>
             </div>
-            <Badge label={s.status} />
+            <Badge label={s.status || 'new'} />
           </div>
         ))}
       </div>
 
-      {/* Students by course */}
       <div className="admin-card">
         <h3 className="admin-card-title">Students by Course</h3>
         {['QuickBooks Training', 'Xero Certification Prep', 'MYOB & SAGE Training', 'Excel for Accountants', 'Global Opportunity Program'].map(course => {
           const count = students.filter(s => s.course === course).length;
-          const pct = Math.round((count / students.length) * 100);
+          const pct = students.length ? Math.round((count / students.length) * 100) : 0;
           return (
             <div key={course} className="admin-bar-row">
               <div className="admin-bar-labels">
@@ -128,28 +99,43 @@ const Overview = ({ submissions, students, testimonials, blog }: {
   </div>
 );
 
-/* ─── SUBMISSIONS ─── */
-const Submissions = ({ data, setData }: { data: Submission[]; setData: (d: Submission[]) => void }) => {
+const Submissions = ({ data, setData, token }: { data: Submission[]; setData: (d: Submission[]) => void; token: string }) => {
   const [filter, setFilter] = useState<'all' | 'new' | 'read' | 'replied'>('all');
   const [active, setActive] = useState<Submission | null>(null);
 
-  const filtered = filter === 'all' ? data : data.filter(s => s.status === filter);
+  const filtered = filter === 'all' ? data : data.filter(s => (s.status || 'new') === filter);
 
-  const markAs = (id: number, status: Submission['status']) => {
-    setData(data.map(s => s.id === id ? { ...s, status } : s));
-    if (active?.id === id) setActive(prev => prev ? { ...prev, status } : null);
+  const markAs = async (id: string, status: string) => {
+    try {
+      await fetch(`${API}/contact/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      setData(data.map(s => s._id === id ? { ...s, status } : s));
+      if (active?._id === id) setActive(prev => prev ? { ...prev, status } : null);
+    } catch {
+      toast.error('Failed to update status');
+    }
   };
 
-  const del = (id: number) => {
-    setData(data.filter(s => s.id !== id));
-    if (active?.id === id) setActive(null);
+  const del = async (id: string) => {
+    try {
+      await fetch(`${API}/contact/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setData(data.filter(s => s._id !== id));
+      if (active?._id === id) setActive(null);
+    } catch {
+      toast.error('Failed to delete');
+    }
   };
 
   return (
     <div>
-      <PageHeader title="Contact Submissions" sub={`${data.filter(s => s.status === 'new').length} unread messages`} />
+      <PageHeader title="Contact Submissions" sub={`${data.filter(s => (s.status || 'new') === 'new').length} unread messages`} />
 
-      {/* Filter tabs */}
       <div className="admin-filters">
         {(['all', 'new', 'read', 'replied'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`admin-filter-btn ${filter === f ? 'active' : ''}`}>
@@ -159,28 +145,30 @@ const Submissions = ({ data, setData }: { data: Submission[]; setData: (d: Submi
       </div>
 
       <div className={`admin-sub-layout ${active ? 'with-detail' : ''}`}>
-        {/* List */}
         <div className="admin-sub-list">
-          {filtered.map(s => (
-            <div key={s.id} onClick={() => setActive(s)} className={`admin-sub-item ${active?.id === s.id ? 'active' : ''}`}>
-              <div>
-                <div className="admin-sub-row">
-                  {s.status === 'new' && <span className="admin-sub-dot" />}
-                  <span className={`admin-sub-name ${s.status === 'new' ? 'bold' : ''}`}>{s.name}</span>
+          {filtered.map(s => {
+            const name = s.firstName ? `${s.firstName} ${s.lastName}` : 'Unknown';
+            const st = s.status || 'new';
+            return (
+              <div key={s._id} onClick={() => setActive(s)} className={`admin-sub-item ${active?._id === s._id ? 'active' : ''}`}>
+                <div>
+                  <div className="admin-sub-row">
+                    {st === 'new' && <span className="admin-sub-dot" />}
+                    <span className={`admin-sub-name ${st === 'new' ? 'bold' : ''}`}>{name}</span>
+                  </div>
+                  <div className="admin-sub-meta">{s.interest} · {s.createdAt?.slice(0, 10)}</div>
                 </div>
-                <div className="admin-sub-meta">{s.interest} · {s.date}</div>
+                <Badge label={st} />
               </div>
-              <Badge label={s.status} />
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Detail */}
         {active && (
           <div className="admin-detail">
             <div className="admin-detail-header">
               <div>
-                <h2 className="admin-detail-name">{active.name}</h2>
+                <h2 className="admin-detail-name">{active.firstName ? `${active.firstName} ${active.lastName}` : 'Unknown'}</h2>
                 <a href={`mailto:${active.email}`} className="admin-detail-email">{active.email}</a>
               </div>
               <button onClick={() => setActive(null)} className="admin-detail-close">×</button>
@@ -192,19 +180,19 @@ const Submissions = ({ data, setData }: { data: Submission[]; setData: (d: Submi
               </div>
               <div className="admin-detail-chip">
                 <div className="admin-detail-chip-label">Date</div>
-                <div className="admin-detail-chip-value">{active.date}</div>
+                <div className="admin-detail-chip-value">{active.createdAt?.slice(0, 10)}</div>
               </div>
               <div className="admin-detail-chip">
                 <div className="admin-detail-chip-label">Status</div>
-                <div className="admin-detail-chip-value"><Badge label={active.status} /></div>
+                <div className="admin-detail-chip-value"><Badge label={active.status || 'new'} /></div>
               </div>
             </div>
             <div className="admin-detail-message">{active.message}</div>
             <div className="admin-action-row">
-              <button onClick={() => markAs(active.id, 'read')} className="admin-btn admin-btn-ghost admin-btn-md">Mark Read</button>
-              <button onClick={() => markAs(active.id, 'replied')} className="admin-btn admin-btn-success admin-btn-md">Mark Replied</button>
+              <button onClick={() => markAs(active._id, 'read')} className="admin-btn admin-btn-ghost admin-btn-md">Mark Read</button>
+              <button onClick={() => markAs(active._id, 'replied')} className="admin-btn admin-btn-success admin-btn-md">Mark Replied</button>
               <a href={`mailto:${active.email}`} className="admin-btn admin-btn-danger admin-btn-md">Reply via Email</a>
-              <button onClick={() => del(active.id)} className="admin-btn admin-btn-danger admin-btn-md">Delete</button>
+              <button onClick={() => del(active._id)} className="admin-btn admin-btn-danger admin-btn-md">Delete</button>
             </div>
           </div>
         )}
@@ -213,23 +201,93 @@ const Submissions = ({ data, setData }: { data: Submission[]; setData: (d: Submi
   );
 };
 
-/* ─── STUDENTS ─── */
-const Students = ({ data, setData }: { data: Student[]; setData: (d: Student[]) => void }) => {
+const Students = ({ data, setData, token }: { data: Student[]; setData: (d: Student[]) => void; token: string }) => {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'dropped'>('all');
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<Student | null>(null);
   const [form, setForm] = useState({ name: '', email: '', phone: '', course: 'QuickBooks Training', enrolled: '', status: 'active' as Student['status'] });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const filtered = filter === 'all' ? data : data.filter(s => s.status === filter);
 
-  const add = () => {
-    if (!form.name || !form.email) return;
-    setData([...data, { ...form, id: Date.now() }]);
-    setAdding(false);
+  const resetForm = () => {
     setForm({ name: '', email: '', phone: '', course: 'QuickBooks Training', enrolled: '', status: 'active' });
+    setFormErrors({});
   };
 
-  const del = (id: number) => setData(data.filter(s => s.id !== id));
-  const toggle = (id: number, status: Student['status']) => setData(data.map(s => s.id === id ? { ...s, status } : s));
+  const save = async () => {
+    const errs: Record<string, string> = {};
+    const nErr = val.name(form.name);
+    if (nErr) errs.name = nErr;
+    const eErr = val.email(form.email);
+    if (eErr) errs.email = eErr;
+    const pErr = val.phone(form.phone);
+    if (pErr) errs.phone = pErr;
+    setFormErrors(errs);
+    if (Object.keys(errs).length) return;
+    try {
+      if (editing) {
+        const res = await fetch(`${API}/students/${editing._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
+        const updated = await res.json();
+        setData(data.map(s => s._id === editing._id ? updated : s));
+        setEditing(null);
+      } else {
+        const res = await fetch(`${API}/students`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
+        const created = await res.json();
+        setData([...data, created]);
+        setAdding(false);
+      }
+      resetForm();
+      toast.success(editing ? 'Student updated' : 'Student added');
+    } catch {
+      toast.error('Failed to save student');
+    }
+  };
+
+  const del = async (id: string) => {
+    try {
+      const res = await fetch(`${API}/students/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      setData(data.filter(s => s._id !== id));
+      toast.success('Student deleted');
+    } catch {
+      toast.error('Failed to delete student');
+    }
+  };
+
+  const toggleStatus = async (id: string, status: Student['status']) => {
+    try {
+      const res = await fetch(`${API}/students/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setData(data.map(s => s._id === id ? updated : s));
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const startEdit = (s: Student) => {
+    setEditing(s);
+    setForm({ name: s.name, email: s.email, phone: s.phone, course: s.course, enrolled: s.enrolled, status: s.status });
+    setAdding(false);
+  };
 
   return (
     <div>
@@ -237,20 +295,20 @@ const Students = ({ data, setData }: { data: Student[]; setData: (d: Student[]) 
         title="Enrolled Students"
         sub={`${data.length} total · ${data.filter(s => s.status === 'active').length} active`}
         action={
-          <button onClick={() => setAdding(!adding)} className="admin-btn admin-btn-primary admin-btn-md">+ Add Student</button>
+          <button onClick={() => { setAdding(!adding); setEditing(null); resetForm(); }} className="admin-btn admin-btn-primary admin-btn-md">+ Add Student</button>
         }
       />
 
-      {/* Add form */}
-      {adding && (
+      {(adding || editing) && (
         <div className="admin-form-panel">
-          <h3>New Student</h3>
+          <h3>{editing ? 'Edit Student' : 'New Student'}</h3>
           <div className="admin-form-grid">
             {[['Name', 'name', 'text'], ['Email', 'email', 'email'], ['Phone', 'phone', 'text'], ['Enrolled Date', 'enrolled', 'date']].map(([label, key, type]) => (
               <div key={key}>
                 <label className="admin-label">{label}</label>
-                <input type={type} value={(form as any)[key]} onChange={e => setForm({ ...form, [key]: e.target.value })}
-                  className="admin-input" placeholder={label as string} />
+                <input type={type} value={form[key as keyof typeof form] as string} onChange={e => { setForm({ ...form, [key]: e.target.value }); setFormErrors(p => ({ ...p, [key]: '' })); }}
+                  className={`admin-input ${formErrors[key] ? 'admin-input-error' : ''}`} placeholder={label} />
+                {formErrors[key] && <span className="admin-field-error">{formErrors[key]}</span>}
               </div>
             ))}
             <div>
@@ -263,13 +321,12 @@ const Students = ({ data, setData }: { data: Student[]; setData: (d: Student[]) 
             </div>
           </div>
           <div className="admin-action-row">
-            <button onClick={add} className="admin-btn admin-btn-primary admin-btn-md">Save</button>
-            <button onClick={() => setAdding(false)} className="admin-btn admin-btn-ghost admin-btn-md">Cancel</button>
+            <button onClick={save} className="admin-btn admin-btn-primary admin-btn-md">Save</button>
+            <button onClick={() => { setAdding(false); setEditing(null); resetForm(); }} className="admin-btn admin-btn-ghost admin-btn-md">Cancel</button>
           </div>
         </div>
       )}
 
-      {/* Filter */}
       <div className="admin-filters">
         {(['all', 'active', 'completed', 'dropped'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`admin-filter-btn ${filter === f ? 'active' : ''}`}>{f.charAt(0).toUpperCase() + f.slice(1)}</button>
@@ -287,7 +344,7 @@ const Students = ({ data, setData }: { data: Student[]; setData: (d: Student[]) 
           </thead>
           <tbody>
             {filtered.map(s => (
-              <tr key={s.id}>
+              <tr key={s._id}>
                 <td className="admin-table-name">{s.name}</td>
                 <td className="admin-table-email">{s.email}</td>
                 <td className="admin-table-muted">{s.course}</td>
@@ -295,12 +352,13 @@ const Students = ({ data, setData }: { data: Student[]; setData: (d: Student[]) 
                 <td><Badge label={s.status} /></td>
                 <td>
                   <div className="admin-table-actions">
-                    <select value={s.status} onChange={e => toggle(s.id, e.target.value as Student['status'])} className="admin-select-sm">
+                    <select value={s.status} onChange={e => toggleStatus(s._id, e.target.value as Student['status'])} className="admin-select-sm">
                       <option value="active">Active</option>
                       <option value="completed">Completed</option>
                       <option value="dropped">Dropped</option>
                     </select>
-                    <button onClick={() => del(s.id)} className="admin-del-btn">×</button>
+                    <button onClick={() => startEdit(s)} className="admin-btn admin-btn-ghost admin-btn-sm">Edit</button>
+                    <button onClick={() => del(s._id)} className="admin-del-btn">×</button>
                   </div>
                 </td>
               </tr>
@@ -312,26 +370,82 @@ const Students = ({ data, setData }: { data: Student[]; setData: (d: Student[]) 
   );
 };
 
-/* ─── TESTIMONIALS ─── */
-const Testimonials = ({ data, setData }: { data: Testimonial[]; setData: (d: Testimonial[]) => void }) => {
+const Testimonials = ({ data, setData, token }: { data: Testimonial[]; setData: (d: Testimonial[]) => void; token: string }) => {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Testimonial | null>(null);
   const [form, setForm] = useState({ name: '', role: 'QuickBooks & Xero Graduate', quote: '', date: '' });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const save = () => {
-    if (!form.name || !form.quote) return;
-    if (editing) {
-      setData(data.map(t => t.id === editing.id ? { ...editing, ...form } : t));
-      setEditing(null);
-    } else {
-      setData([...data, { ...form, id: Date.now(), visible: false }]);
-      setAdding(false);
-    }
+  const resetForm = () => {
     setForm({ name: '', role: 'QuickBooks & Xero Graduate', quote: '', date: '' });
+    setFormErrors({});
   };
 
-  const toggleVisible = (id: number) => setData(data.map(t => t.id === id ? { ...t, visible: !t.visible } : t));
-  const del = (id: number) => setData(data.filter(t => t.id !== id));
+  const save = async () => {
+    const errs: Record<string, string> = {};
+    const nErr = val.name(form.name);
+    if (nErr) errs.name = nErr;
+    if (!form.quote.trim()) errs.quote = 'Quote is required';
+    else if (form.quote.trim().length < 10) errs.quote = 'Quote must be at least 10 characters';
+    setFormErrors(errs);
+    if (Object.keys(errs).length) return;
+    try {
+      if (editing) {
+        const res = await fetch(`${API}/testimonials/${editing._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
+        const updated = await res.json();
+        setData(data.map(t => t._id === editing._id ? updated : t));
+        setEditing(null);
+      } else {
+        const res = await fetch(`${API}/testimonials`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ ...form, visible: false }),
+        });
+        if (!res.ok) throw new Error();
+        const created = await res.json();
+        setData([...data, created]);
+        setAdding(false);
+      }
+      resetForm();
+      toast.success(editing ? 'Testimonial updated' : 'Testimonial added');
+    } catch {
+      toast.error('Failed to save testimonial');
+    }
+  };
+
+  const toggleVisible = async (id: string, current: boolean) => {
+    try {
+      const res = await fetch(`${API}/testimonials/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ visible: !current }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setData(data.map(t => t._id === id ? updated : t));
+    } catch {
+      toast.error('Failed to update visibility');
+    }
+  };
+
+  const del = async (id: string) => {
+    try {
+      const res = await fetch(`${API}/testimonials/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      setData(data.filter(t => t._id !== id));
+      toast.success('Testimonial deleted');
+    } catch {
+      toast.error('Failed to delete testimonial');
+    }
+  };
 
   const startEdit = (t: Testimonial) => {
     setEditing(t);
@@ -344,7 +458,7 @@ const Testimonials = ({ data, setData }: { data: Testimonial[]; setData: (d: Tes
       <PageHeader
         title="Testimonials"
         sub={`${data.filter(t => t.visible).length} visible on site`}
-        action={<button onClick={() => { setAdding(!adding); setEditing(null); }} className="admin-btn admin-btn-primary admin-btn-md">+ Add</button>}
+        action={<button onClick={() => { setAdding(!adding); setEditing(null); resetForm(); }} className="admin-btn admin-btn-primary admin-btn-md">+ Add</button>}
       />
 
       {(adding || editing) && (
@@ -353,7 +467,8 @@ const Testimonials = ({ data, setData }: { data: Testimonial[]; setData: (d: Tes
           <div className="admin-form-grid">
             <div>
               <label className="admin-label">Name</label>
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="admin-input" placeholder="Graduate name" />
+              <input value={form.name} onChange={e => { setForm({ ...form, name: e.target.value }); setFormErrors(p => ({ ...p, name: '' })); }} className={`admin-input ${formErrors.name ? 'admin-input-error' : ''}`} placeholder="Graduate name" />
+              {formErrors.name && <span className="admin-field-error">{formErrors.name}</span>}
             </div>
             <div>
               <label className="admin-label">Role</label>
@@ -362,18 +477,19 @@ const Testimonials = ({ data, setData }: { data: Testimonial[]; setData: (d: Tes
           </div>
           <div className="admin-mt-12">
             <label className="admin-label">Quote</label>
-            <textarea value={form.quote} onChange={e => setForm({ ...form, quote: e.target.value })} className="admin-textarea" placeholder="Their testimonial..." />
+            <textarea value={form.quote} onChange={e => { setForm({ ...form, quote: e.target.value }); setFormErrors(p => ({ ...p, quote: '' })); }} className={`admin-textarea ${formErrors.quote ? 'admin-input-error' : ''}`} placeholder="Their testimonial..." />
+            {formErrors.quote && <span className="admin-field-error">{formErrors.quote}</span>}
           </div>
           <div className="admin-action-row">
             <button onClick={save} className="admin-btn admin-btn-primary admin-btn-md">Save</button>
-            <button onClick={() => { setAdding(false); setEditing(null); }} className="admin-btn admin-btn-ghost admin-btn-md">Cancel</button>
+            <button onClick={() => { setAdding(false); setEditing(null); resetForm(); }} className="admin-btn admin-btn-ghost admin-btn-md">Cancel</button>
           </div>
         </div>
       )}
 
       <div className="admin-testi-grid">
         {data.map(t => (
-          <div key={t.id} className={`admin-testi-card ${t.visible ? 'visible' : 'hidden'}`}>
+          <div key={t._id} className={`admin-testi-card ${t.visible ? 'visible' : 'hidden'}`}>
             <div className="admin-testi-header">
               <div>
                 <div className="admin-testi-name">{t.name}</div>
@@ -383,9 +499,9 @@ const Testimonials = ({ data, setData }: { data: Testimonial[]; setData: (d: Tes
             </div>
             <p className="admin-testi-quote">"{t.quote}"</p>
             <div className="admin-action-row">
-              <button onClick={() => toggleVisible(t.id)} className="admin-btn admin-btn-ghost admin-btn-sm">{t.visible ? 'Hide' : 'Show'}</button>
+              <button onClick={() => toggleVisible(t._id, t.visible)} className="admin-btn admin-btn-ghost admin-btn-sm">{t.visible ? 'Hide' : 'Show'}</button>
               <button onClick={() => startEdit(t)} className="admin-btn admin-btn-ghost admin-btn-sm">Edit</button>
-              <button onClick={() => del(t.id)} className="admin-btn admin-btn-danger admin-btn-sm">Delete</button>
+              <button onClick={() => del(t._id)} className="admin-btn admin-btn-danger admin-btn-sm">Delete</button>
             </div>
           </div>
         ))}
@@ -394,26 +510,80 @@ const Testimonials = ({ data, setData }: { data: Testimonial[]; setData: (d: Tes
   );
 };
 
-/* ─── BLOG ─── */
-const Blog = ({ data, setData }: { data: BlogPost[]; setData: (d: BlogPost[]) => void }) => {
+const Blog = ({ data, setData, token }: { data: BlogPost[]; setData: (d: BlogPost[]) => void; token: string }) => {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [form, setForm] = useState({ title: '', category: 'Career', readTime: '5 min', date: '', author: '', published: false });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const save = () => {
-    if (!form.title) return;
-    if (editing) {
-      setData(data.map(b => b.id === editing.id ? { ...editing, ...form } : b));
-      setEditing(null);
-    } else {
-      setData([...data, { ...form, id: Date.now() }]);
-      setAdding(false);
-    }
+  const resetForm = () => {
     setForm({ title: '', category: 'Career', readTime: '5 min', date: '', author: '', published: false });
+    setFormErrors({});
   };
 
-  const togglePublish = (id: number) => setData(data.map(b => b.id === id ? { ...b, published: !b.published } : b));
-  const del = (id: number) => setData(data.filter(b => b.id !== id));
+  const save = async () => {
+    const errs: Record<string, string> = {};
+    if (!form.title.trim()) errs.title = 'Title is required';
+    else if (form.title.trim().length < 3) errs.title = 'Title must be at least 3 characters';
+    setFormErrors(errs);
+    if (Object.keys(errs).length) return;
+    try {
+      if (editing) {
+        const res = await fetch(`${API}/posts/${editing._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
+        const updated = await res.json();
+        setData(data.map(b => b._id === editing._id ? updated : b));
+        setEditing(null);
+      } else {
+        const res = await fetch(`${API}/posts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
+        const created = await res.json();
+        setData([...data, created]);
+        setAdding(false);
+      }
+      resetForm();
+      toast.success(editing ? 'Post updated' : 'Post created');
+    } catch {
+      toast.error('Failed to save post');
+    }
+  };
+
+  const togglePublish = async (id: string, current: boolean) => {
+    try {
+      const res = await fetch(`${API}/posts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ published: !current }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setData(data.map(b => b._id === id ? updated : b));
+    } catch {
+      toast.error('Failed to update publish status');
+    }
+  };
+
+  const del = async (id: string) => {
+    try {
+      const res = await fetch(`${API}/posts/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      setData(data.filter(b => b._id !== id));
+      toast.success('Post deleted');
+    } catch {
+      toast.error('Failed to delete post');
+    }
+  };
 
   const startEdit = (b: BlogPost) => {
     setEditing(b);
@@ -426,7 +596,7 @@ const Blog = ({ data, setData }: { data: BlogPost[]; setData: (d: BlogPost[]) =>
       <PageHeader
         title="Blog Posts"
         sub={`${data.filter(b => b.published).length} published · ${data.filter(b => !b.published).length} drafts`}
-        action={<button onClick={() => { setAdding(!adding); setEditing(null); }} className="admin-btn admin-btn-primary admin-btn-md">+ New Post</button>}
+        action={<button onClick={() => { setAdding(!adding); setEditing(null); resetForm(); }} className="admin-btn admin-btn-primary admin-btn-md">+ New Post</button>}
       />
 
       {(adding || editing) && (
@@ -434,7 +604,8 @@ const Blog = ({ data, setData }: { data: BlogPost[]; setData: (d: BlogPost[]) =>
           <h3>{editing ? 'Edit Post' : 'New Post'}</h3>
           <div>
             <label className="admin-label">Title</label>
-            <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="admin-input" placeholder="Post title..." />
+            <input value={form.title} onChange={e => { setForm({ ...form, title: e.target.value }); setFormErrors(p => ({ ...p, title: '' })); }} className={`admin-input ${formErrors.title ? 'admin-input-error' : ''}`} placeholder="Post title..." />
+            {formErrors.title && <span className="admin-field-error">{formErrors.title}</span>}
           </div>
           <div className="admin-form-grid-3 admin-mt-12">
             <div>
@@ -467,19 +638,19 @@ const Blog = ({ data, setData }: { data: BlogPost[]; setData: (d: BlogPost[]) =>
 
       <div className="admin-blog-list">
         {data.map(b => (
-          <div key={b.id} className={`admin-blog-item ${b.published ? '' : 'draft'}`}>
+          <div key={b._id} className={`admin-blog-item ${b.published ? '' : 'draft'}`}>
             <div className="admin-blog-meta">
               <div className="admin-blog-top">
-                <span className="admin-pill">{b.category}</span>
+                <span className="admin-tag">{b.category}</span>
                 <Badge label={b.published ? 'published' : 'draft'} />
               </div>
               <div className="admin-blog-title">{b.title}</div>
               <div className="admin-blog-sub">{b.author} · {b.readTime} · {b.date}</div>
             </div>
             <div className="admin-action-row">
-              <button onClick={() => togglePublish(b.id)} className="admin-btn admin-btn-ghost admin-btn-sm">{b.published ? 'Unpublish' : 'Publish'}</button>
+              <button onClick={() => togglePublish(b._id, b.published)} className="admin-btn admin-btn-ghost admin-btn-sm">{b.published ? 'Unpublish' : 'Publish'}</button>
               <button onClick={() => startEdit(b)} className="admin-btn admin-btn-ghost admin-btn-sm">Edit</button>
-              <button onClick={() => del(b.id)} className="admin-btn admin-btn-danger admin-btn-sm">Delete</button>
+              <button onClick={() => del(b._id)} className="admin-btn admin-btn-danger admin-btn-sm">Delete</button>
             </div>
           </div>
         ))}
@@ -488,58 +659,149 @@ const Blog = ({ data, setData }: { data: BlogPost[]; setData: (d: BlogPost[]) =>
   );
 };
 
-/* Styles are provided by Admin.css; inline style helpers removed. */
+const Users = ({ data }: { data: AppUser[] }) => {
+  return (
+    <div>
+      <PageHeader title="Users" sub={`${data.length} registered accounts`} />
+      <div className="admin-table-wrap">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              {['Name', 'Email', 'Role', 'Joined'].map(h => <th key={h}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map(u => (
+              <tr key={u._id}>
+                <td className="admin-table-name">{u.name}</td>
+                <td className="admin-table-email">{u.email}</td>
+                <td><Badge label={u.role} /></td>
+                <td className="admin-table-dim">{u.createdAt?.slice(0, 10)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
-/* ─── Main body with tab routing ─── */
-type Tab = 'overview' | 'submissions' | 'students' | 'testimonials' | 'blog';
+type Tab = 'overview' | 'submissions' | 'students' | 'testimonials' | 'blog' | 'users';
 
-export default function AdminBody() {
+export default function AdminBody({ token }: { token: string }) {
   const [tab, setTab] = useState<Tab>('overview');
-  const [submissions, setSubmissions] = useState<Submission[]>(initSubmissions);
-  const [students, setStudents] = useState<Student[]>(initStudents);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(initTestimonials);
-  const [blog, setBlog] = useState<BlogPost[]>(initBlog);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [blog, setBlog] = useState<BlogPost[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const tabs: { key: Tab; label: string; icon: string }[] = [
-    { key: 'overview', label: 'Overview', icon: '📊' },
-    { key: 'submissions', label: 'Submissions', icon: '📬' },
-    { key: 'students', label: 'Students', icon: '🎓' },
-    { key: 'testimonials', label: 'Testimonials', icon: '💬' },
-    { key: 'blog', label: 'Blog Posts', icon: '📝' },
+  useEffect(() => {
+    const fetchData = async () => {
+      const headers = { Authorization: `Bearer ${token}` };
+      try {
+        const [subRes, stuRes, tesRes, blogRes, usrRes] = await Promise.all([
+          fetch(`${API}/contact`, { headers }),
+          fetch(`${API}/students`, { headers }),
+          fetch(`${API}/testimonials`, { headers }),
+          fetch(`${API}/posts`, { headers }),
+          fetch(`${API}/users`, { headers }),
+        ]);
+        if (subRes.ok) setSubmissions(await subRes.json());
+        if (stuRes.ok) setStudents(await stuRes.json());
+        if (tesRes.ok) setTestimonials(await tesRes.json());
+        if (blogRes.ok) setBlog(await blogRes.json());
+        if (usrRes.ok) setUsers(await usrRes.json());
+      } catch {
+        toast.error('Failed to load some data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [token]);
+
+  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
+    { key: 'overview', label: 'Overview', icon:
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+      </svg>
+    },
+    { key: 'submissions', label: 'Submissions', icon:
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2" /><path d="M22 7l-10 7L2 7" />
+      </svg>
+    },
+    { key: 'students', label: 'Students', icon:
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" />
+        <path d="M20 8l-3 3-2-2" />
+      </svg>
+    },
+    { key: 'testimonials', label: 'Testimonials', icon:
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+      </svg>
+    },
+    { key: 'blog', label: 'Blog Posts', icon:
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+      </svg>
+    },
+    { key: 'users', label: 'Users', icon:
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
+      </svg>
+    },
   ];
+
+  if (loading) {
+    return (
+      <div className="admin-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <p style={{ color: '#555' }}>Loading dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-root">
-      {/* Top bar */}
       <div className="admin-topbar">
-        {/* Logo */}
         <div className="admin-logo">
           <div className="admin-logo-dot">A</div>
           <span className="admin-logo-text">Aros Admin</span>
         </div>
 
-        {/* Tabs */}
         <div className="admin-tabs">
           {tabs.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} className={`admin-tab ${tab === t.key ? 'active' : ''}`}>
-              <span>{t.icon}</span>{t.label}
-              {t.key === 'submissions' && submissions.filter(s => s.status === 'new').length > 0 && (
-                <span className="admin-tab-badge">{submissions.filter(s => s.status === 'new').length}</span>
+              {t.icon}{t.label}
+              {t.key === 'submissions' && submissions.filter(s => (s.status || 'new') === 'new').length > 0 && (
+                <span className="admin-tab-badge">{submissions.filter(s => (s.status || 'new') === 'new').length}</span>
               )}
             </button>
           ))}
         </div>
 
-        <a href="/" className="admin-topbar-back">← Back to site</a>
+        <a href="/" className="admin-topbar-back">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Back to site
+        </a>
       </div>
 
-      {/* Content */}
       <div className="admin-content">
         {tab === 'overview'     && <Overview submissions={submissions} students={students} testimonials={testimonials} blog={blog} />}
-        {tab === 'submissions'  && <Submissions data={submissions} setData={setSubmissions} />}
-        {tab === 'students'     && <Students data={students} setData={setStudents} />}
-        {tab === 'testimonials' && <Testimonials data={testimonials} setData={setTestimonials} />}
-        {tab === 'blog'         && <Blog data={blog} setData={setBlog} />}
+        {tab === 'submissions'  && <Submissions data={submissions} setData={setSubmissions} token={token} />}
+        {tab === 'students'     && <Students data={students} setData={setStudents} token={token} />}
+        {tab === 'testimonials' && <Testimonials data={testimonials} setData={setTestimonials} token={token} />}
+        {tab === 'blog'         && <Blog data={blog} setData={setBlog} token={token} />}
+        {tab === 'users'        && <Users data={users} />}
       </div>
     </div>
   );

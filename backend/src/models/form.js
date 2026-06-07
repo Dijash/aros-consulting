@@ -26,11 +26,20 @@ const contactSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+
+        // Used by Admin panel (frontend/src/Pages/Admin/body.tsx)
+        // PATCH /contact/:id sends: { status: "read" | "replied" }
+        status: {
+            type: String,
+            enum: ["new", "read", "replied"],
+            default: "new",
+        },
     },
     {
         timestamps: true,
     }
 );
+
 
 const Contact = mongoose.model("Contact", contactSchema);
 
