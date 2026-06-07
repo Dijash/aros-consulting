@@ -2,7 +2,7 @@ import { type FormEvent, useState } from "react";
 import toast from "react-hot-toast";
 import { val } from "../validation";
 
-const API = import.meta.env.VITE_API_URL || 'https://aros-consulting-fofj.vercel.app';
+import API from '../api';
 
 interface LoginModalProps {
   isOpen: boolean;
