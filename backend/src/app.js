@@ -14,24 +14,7 @@ const port = process.env.PORT;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const corsOrigins = new Set(
-  (process.env.CORS_ORIGIN || 'http://localhost:5173,https://aros-consulting-3n6c.vercel.app')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean)
-);
-
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin || corsOrigins.has(origin)) {
-      callback(null, true);
-      return;
-    }
-
-    callback(null, false);
-  },
-  credentials: true,
-}));
+app.use(cors());
 
 app.use(express.json());
 app.use(router);
@@ -52,7 +35,7 @@ if (existsSync(frontendDist)) {
   });
 }
 
-connectDB();
+await connectDB();
 
 if (!process.env.VERCEL) {
   app.listen(port, () => {
