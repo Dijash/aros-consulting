@@ -21,7 +21,7 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use("/api", router);
 app.get("/api/health", (req, res) => {
   res.status(200).json({ message: "API is running" });

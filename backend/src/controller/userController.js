@@ -102,8 +102,8 @@ export const updateUser = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
             req.body,
-            { new: true }
-        ).select("-password");
+            { new: true, projection: { password: 0 } }
+        );
         if (!updatedUser) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -133,7 +133,11 @@ export const updateProfile = async (req, res) => {
         if (password) {
             updates.password = await bcrypt.hash(password, 10);
         }
-        const updated = await User.findByIdAndUpdate(req.user._id, updates, { new: true }).select("-password");
+        const updated = await User.findByIdAndUpdate(
+            req.user._id,
+            updates,
+            { new: true, projection: { password: 0 } }
+        );
         if (!updated) {
             return res.status(404).json({ message: "User not found" });
         }
