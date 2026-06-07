@@ -90,42 +90,46 @@ const Navbar = ({ user, onLoginClick, onRegisterClick, onLogout }: NavbarProps) 
         </button>
       </nav>
 
-      {menuOpen && (
-        <div className="mobile-menu" onClick={closeMenu}>
-          <button className="mobile-close" onClick={closeMenu} aria-label="Close menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-          <ul className="mobile-nav-links" onClick={e => e.stopPropagation()}>
-            {['about','services','mentors','testimonials','blog','contact'].map(id => (
-              <li key={id}>
-                <a href={`#${id}`} className="mob-link" onClick={e => { e.preventDefault(); scrollTo(id); }}>
-                  {id === 'blog' ? 'Resources' : id.charAt(0).toUpperCase() + id.slice(1)}
-                </a>
-              </li>
-            ))}
-            <li>
-              {user ? (
-                <a href={user?.role === 'admin' ? '/admin' : '/user'} className="mob-link" onClick={closeMenu}>
-                  Dashboard
-                </a>
-              ) : (
-                <a href="#login" className="mob-link" onClick={e => { e.preventDefault(); onLoginClick?.(); }}>
-                  Login
-                </a>
-              )}
+      <div className={`mobile-menu${menuOpen ? ' active' : ''}`} onClick={closeMenu}>
+        <button className="mobile-close" onClick={closeMenu} aria-label="Close menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <ul className="mobile-nav-links" onClick={e => e.stopPropagation()}>
+          {['about','services','mentors','testimonials','blog','contact'].map(id => (
+            <li key={id}>
+              <a href={`#${id}`} className="mob-link" onClick={e => { e.preventDefault(); scrollTo(id); }}>
+                {id === 'blog' ? 'Resources' : id.charAt(0).toUpperCase() + id.slice(1)}
+              </a>
             </li>
-            {user && (
-              <li>
-                <a href="#logout" className="mob-link" onClick={e => { e.preventDefault(); onLogout?.(); }}>
-                  Logout
-                </a>
-              </li>
+          ))}
+          <li className="mob-divider" />
+          <li>
+            {user ? (
+              <a href={user?.role === 'admin' ? '/admin' : '/user'} className="mob-link" onClick={closeMenu}>
+                Dashboard
+              </a>
+            ) : (
+              <a href="#login" className="mob-link" onClick={e => { e.preventDefault(); onLoginClick?.(); }}>
+                Login
+              </a>
             )}
-          </ul>
-        </div>
-      )}
+          </li>
+          {user && (
+            <li>
+              <a href="#logout" className="mob-link" onClick={e => { e.preventDefault(); onLogout?.(); }}>
+                Logout
+              </a>
+            </li>
+          )}
+          <li>
+            <a href="#register" className="mob-link mob-link-cta" onClick={e => { e.preventDefault(); onRegisterClick?.(); }}>
+              Get Started
+            </a>
+          </li>
+        </ul>
+      </div>
     </>
   );
 };

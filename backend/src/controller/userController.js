@@ -44,9 +44,9 @@ export const registerUser = async (req, res) => {
             { expiresIn: "7d" }
         );
         const { password: _, ...userWithoutPassword } = savedUser.toObject();
-        res.status(201).json({ token, user: userWithoutPassword });
+        return res.status(201).json({ token, user: userWithoutPassword });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 };
 
@@ -75,9 +75,9 @@ export const loginUser = async (req, res) => {
         );
 
         const { password: _, ...userWithoutPassword } = user.toObject();
-        res.status(200).json({ token, user: userWithoutPassword });
+        return res.status(200).json({ token, user: userWithoutPassword });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 };
 

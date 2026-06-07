@@ -2216,6 +2216,33 @@ footer {
 
   .mob-link:hover { color: var(--brand); }
 
+  .mob-divider {
+    width: 40px;
+    height: 1px;
+    background: rgba(255,255,255,.15);
+    margin: 8px auto;
+  }
+
+  .mob-link-cta {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 14px 40px;
+    border-radius: 100px;
+    background: linear-gradient(135deg, var(--brand), #7a1523);
+    border: 1px solid rgba(255,255,255,.15);
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    transition: all .3s ease;
+  }
+
+  .mob-link-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(204, 17, 17, 0.4);
+    color: #fff !important;
+  }
+
   section { padding: 128px 7%; }
   .s-title { font-size: clamp(2.2rem, 8vw, 4rem); }
   .journey-line { left: 20px; transform: none; }
