@@ -11,10 +11,10 @@ import empireImg from "../assets/images/Empire.png";
 import quantumImg from "../assets/images/Quantum.png";
 import ecjImg from "../assets/images/ECJ Online.png";
 import ecovisImg from "../assets/images/ECOVIS.png";
-import deepakImg from "../assets/images/LinkdeIn Image (1).png";
+import deepakImg from "../assets/images/LinkdeIn.png";
 import dineshImg from "../assets/images/Dinesh.jpg";
 import ujjwalImg from "../assets/images/Ujjwal.jpg";
-import anilImg from "../assets/images/Anil (1).png";
+import anilImg from "../assets/images/Anil.png";
 import earthVideo from "../assets/video/Earth Animation.mp4";
 
 import API from '../api';
