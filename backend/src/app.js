@@ -14,8 +14,24 @@ const port = process.env.PORT;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
-app.use(cors({ origin: corsOrigin.split(',').map(o => o.trim()) }));
+const corsOrigins = new Set(
+  (process.env.CORS_ORIGIN || 'http://localhost:5173,https://aros-consulting-3n6c.vercel.app')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || corsOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(null, false);
+  },
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use(router);
